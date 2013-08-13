@@ -3,26 +3,27 @@ from urllib.request import urlopen
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
-def urlopen_trys(url, maxTrys = 0):
+
+def soup_link(url, maxTry = 0):
     """uses urlopen except it keeps trying to open the page maxTrys
     times before failing. If maxTrys = 0 then it will never stop trying"""
-     
     attempt = 1
     while True:
         try:
-            return urlopen(url)
+            page = urlopen(url)
+            return soup(page)
         except urllib.error.HTTPError as e:
-            if attempt == maxTrys:
+            if attempt == maxTry:
                 raise e
             else:
                 attempt += 1
       
     
-def soup_links(links, numThreads = 20):
+def soup_links(links, numThreads = 20, maxTry = 0):
     """takes a list of url strings and returns a map object of soups. second argument
     determines the number of strings used."""
     executor = ThreadPoolExecutor(max_workers = numThreads)
-    return executor.map(lambda x : soup(urlopen_trys(x)), links)
+    return executor.map(lambda x : soup_link(x, maxTry), links)
 
 class soup(BeautifulSoup):
     def navigate(self, argsList):
@@ -30,7 +31,6 @@ class soup(BeautifulSoup):
         firstLoop = True
         newSoup = self
         for args in argsList:
-            print(args)
             name = None
             attrs = None
             text = None
